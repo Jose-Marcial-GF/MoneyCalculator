@@ -3,11 +3,14 @@ package software.ulpgc.moneycalculator.application.Aguakate;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.ValueMarker;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.XYItemRenderer;
+import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.time.Day;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 import software.ulpgc.moneycalculator.architecture.control.Command;
-import software.ulpgc.moneycalculator.architecture.io.ChartBuilder;
 import software.ulpgc.moneycalculator.architecture.model.Chart;
 import software.ulpgc.moneycalculator.architecture.model.Currency;
 import software.ulpgc.moneycalculator.architecture.model.Money;
@@ -58,7 +61,12 @@ public class Desktop extends JFrame{
     private JPanel southpanel() {
         JPanel panel = new JPanel();
         panel.setLayout(new FlowLayout());
-        panel.add(weekAgoButton());
+        panel.add(createButton("Week", "week"));
+        panel.add(createButton("Month", "month"));
+        panel.add(createButton("6 Month", "6month"));
+        panel.add(createButton("Year", "year"));
+        panel.add(createButton("5 Year", "5year"));
+        panel.add(createButton("Max", "max"));
         return panel;
     }
 
@@ -69,23 +77,27 @@ public class Desktop extends JFrame{
         panel.add(inputCurrency = currencySelector());
         panel.add(outputAmount = amountOutput());
         panel.add(outputCurrency = currencySelector());
-        panel.add(calculateButton());
+        panel.add(createButton("Exchange", "exchange"));
         return panel;
     }
 
-    private Component weekAgoButton() {
-        JButton button = new JButton("week ago");
+    private Component createButton(String buttonName, String commandName){
+        JButton button = new JButton(buttonName);
         button.addActionListener(e -> {
-            commands.get("weekago").execute();
+            commands.get(commandName).execute();
         });
         return button;
     }
 
-    private Component calculateButton() {
-        JButton button = new JButton("Exchange");
-        button.addActionListener(e -> commands.get("exchange").execute());
+    //TODO eliminar esta linea
+    private Component weekAgoButton() {
+        JButton button = new JButton("week");
+        button.addActionListener(e -> {
+            commands.get("week").execute();
+        });
         return button;
     }
+
 
     private JTextField amountInput() {
         return new JTextField(10);
@@ -141,15 +153,43 @@ public class Desktop extends JFrame{
     public ChartDisplay chartDisplay() {
         return chart -> {
             JFreeChart lineChart = getXyLineChart(chart);
-
-            chartPanel.setChart(decorate(lineChart));
+            chartPanel.setChart(decorate(lineChart, chart));
             chartPanel.repaint();
             chartPanel.revalidate();
         };
     }
 
-    private JFreeChart decorate(JFreeChart lineChart) {
+    private JFreeChart decorate(JFreeChart lineChart, Chart chart) {
+        decorate((XYPlot) lineChart.getPlot(), chart);
         return lineChart;
+    }
+
+    private void decorate(XYPlot plot, Chart chart) {
+        plot.setBackgroundPaint(null);
+        plot.addRangeMarker(getMarker(chart));
+        paintLine(plot.getRenderer(), chart);
+    }
+
+    private static ValueMarker getMarker(Chart chart) {
+        ValueMarker marker = new ValueMarker(chart.PointsList().getFirst().rate());
+        marker.setStroke(new BasicStroke(
+                1.5f,                   // Ancho (width)
+                BasicStroke.CAP_BUTT,   // Estilo de tope de línea
+                BasicStroke.JOIN_MITER, // Estilo de unión de línea
+                10.0f,                  // Miterlimit
+                new float[]{10.0f, 6.0f},            // El patrón discontinuo (dash array)
+                0.0f                    // Fase inicial (dash phase)
+        ));
+        return marker;
+    }
+
+    private void paintLine(XYItemRenderer renderer,Chart chart) {
+        renderer.setSeriesPaint(0, isRising(chart) ?   new Color(129, 210, 149) : new Color(242, 139, 130));
+        renderer.setSeriesStroke(0, new BasicStroke(2.0f));
+    }
+
+    private static boolean isRising(Chart chart) {
+        return chart.PointsList().getFirst().rate() < chart.PointsList().getLast().rate();
     }
 
     private static JFreeChart getXyLineChart(Chart chart) {

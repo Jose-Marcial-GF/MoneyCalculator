@@ -17,12 +17,14 @@ public class GetHistorycComand implements Command {
     private final CurrencyDialog tocurrencyDialog;
     private final ExchangeRateLoader exchangeRateLoader;
     private final ChartDisplay chartDisplay;
+    private final LocalDate elapstime;
 
-    public GetHistorycComand(CurrencyDialog fromCurrencyDialog, CurrencyDialog tocurrencyDialog, ExchangeRateLoader exchangeRateLoader, ChartDisplay chartDisplay) {
+    public GetHistorycComand(CurrencyDialog fromCurrencyDialog, CurrencyDialog tocurrencyDialog, ExchangeRateLoader exchangeRateLoader, ChartDisplay chartDisplay, LocalDate elapstime) {
         this.fromCurrencyDialog = fromCurrencyDialog;
         this.tocurrencyDialog = tocurrencyDialog;
         this.exchangeRateLoader = exchangeRateLoader;
         this.chartDisplay = chartDisplay;
+        this.elapstime = elapstime;
     }
 
 
@@ -30,7 +32,7 @@ public class GetHistorycComand implements Command {
     public void execute() {
         Currency currencyFrom = fromCurrencyDialog.get();
         Currency currencyTo = tocurrencyDialog.get();
-        Stream<ExchangeRate> exchangeRate = exchangeRateLoader.load(currencyFrom, currencyTo, LocalDate.of(2002, 12, 1), LocalDate.now());
+        Stream<ExchangeRate> exchangeRate = exchangeRateLoader.load(currencyFrom, currencyTo, elapstime, LocalDate.now());
         Chart chart = ChartBuilder.with(exchangeRate).title("Exchage Rate: " + currencyFrom.code()+ " -> " + currencyTo.code()).x("date").legend("cover").build();
         chartDisplay.show(chart);
     }

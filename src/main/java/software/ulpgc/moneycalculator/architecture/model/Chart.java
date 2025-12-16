@@ -21,6 +21,10 @@ public class Chart {
         return points.stream();
     }
 
+    public List<Point> PointsList() {
+        return this.points;
+    }
+
     public String title() {
         return labels.getOrDefault("title", "");
     }

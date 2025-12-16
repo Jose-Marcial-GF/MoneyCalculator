@@ -3,36 +3,54 @@ package software.ulpgc.moneycalculator.application.Aguakate;
 
 import software.ulpgc.moneycalculator.architecture.control.ExchangeMoneyCommand;
 import software.ulpgc.moneycalculator.architecture.control.GetHistorycComand;
-import software.ulpgc.moneycalculator.architecture.io.ChartBuilder;
-import software.ulpgc.moneycalculator.architecture.model.Chart;
-import software.ulpgc.moneycalculator.architecture.model.Currency;
-import software.ulpgc.moneycalculator.architecture.model.ExchangeRate;
 
 import java.time.LocalDate;
-import java.util.List;
-import java.util.stream.Stream;
 
 public class Main {
 
-/*
-    public static void main(String[] args) {
-        Stream<Currency> webService = new WebService().loadAll();
-        ExchangeRateLoader exchangeRateLoader = new ExchangeRateLoader();
-        List<Currency> limit = webService.limit(2).toList();
-        Stream<ExchangeRate> load = exchangeRateLoader.load(limit.get(0), limit.get(1), LocalDate.of(2025, 12, 1), LocalDate.now());
-        Chart chart = ChartBuilder.with(load).title("titulo").legend("legend").x("x").build();
-        new ChartPanelDisplay(chart).show(chart);
-    }
-}
-*/
-
     public static void main(String[] args) {
         Desktop desktop = new Desktop(new WebService().loadAll());
-        desktop.addCommand("weekago", new GetHistorycComand(
+        desktop.addCommand("week", new GetHistorycComand(
                 desktop.inputCurrencyDialog(),
                 desktop.currencyDialog(),
                 new ExchangeRateLoader(),
-                desktop.chartDisplay()
+                desktop.chartDisplay(),
+                getLastWeek()
+        ));
+        desktop.addCommand("month", new GetHistorycComand(
+                desktop.inputCurrencyDialog(),
+                desktop.currencyDialog(),
+                new ExchangeRateLoader(),
+                desktop.chartDisplay(),
+                getLastMoth(1)
+        ));
+        desktop.addCommand("6month", new GetHistorycComand(
+                desktop.inputCurrencyDialog(),
+                desktop.currencyDialog(),
+                new ExchangeRateLoader(),
+                desktop.chartDisplay(),
+                getLastMoth(6)
+        ));
+        desktop.addCommand("year", new GetHistorycComand(
+                desktop.inputCurrencyDialog(),
+                desktop.currencyDialog(),
+                new ExchangeRateLoader(),
+                desktop.chartDisplay(),
+                getLastYear(1)
+        ));
+        desktop.addCommand("5year", new GetHistorycComand(
+                desktop.inputCurrencyDialog(),
+                desktop.currencyDialog(),
+                new ExchangeRateLoader(),
+                desktop.chartDisplay(),
+                getLastYear(5)
+        ));
+        desktop.addCommand("max", new GetHistorycComand(
+                desktop.inputCurrencyDialog(),
+                desktop.currencyDialog(),
+                new ExchangeRateLoader(),
+                desktop.chartDisplay(),
+                getLastYear(200)
         ));
         desktop.addCommand("exchange", new ExchangeMoneyCommand(
                 desktop.moneyDialog(),
@@ -42,5 +60,18 @@ public class Main {
         ));
         desktop.setVisible(true);
 
+    }
+
+    private static LocalDate getLastYear(int yearsAgo) {
+        return LocalDate.now().minusYears(yearsAgo);
+    }
+
+    private static LocalDate getLastMoth(int mothsAgo) {
+        return LocalDate.now().minusMonths(mothsAgo);
+    }
+
+
+    private static LocalDate getLastWeek() {
+        return LocalDate.now().minusWeeks(1);
     }
 }
