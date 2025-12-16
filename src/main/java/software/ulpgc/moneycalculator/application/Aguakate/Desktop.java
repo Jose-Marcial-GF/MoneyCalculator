@@ -6,7 +6,6 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.ValueMarker;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYItemRenderer;
-import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.time.Day;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
@@ -19,15 +18,16 @@ import software.ulpgc.moneycalculator.architecture.ui.ChartDisplay;
 import software.ulpgc.moneycalculator.architecture.ui.CurrencyDialog;
 import software.ulpgc.moneycalculator.architecture.ui.MoneyDialog;
 import software.ulpgc.moneycalculator.architecture.ui.MoneyDisplay;
-
 import javax.swing.*;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.ArrayList;
 import java.util.stream.Stream;
 
 import static java.awt.BorderLayout.*;
 import static java.awt.FlowLayout.CENTER;
+import static java.awt.FlowLayout.LEFT;
 
 public class Desktop extends JFrame{
     private final Map<String, Command> commands;
@@ -38,8 +38,13 @@ public class Desktop extends JFrame{
     private JComboBox<Currency> outputCurrency;
     private ChartPanel chartPanel;
 
+    private final ArrayList<JButton> periodButtons; // Lista de botones de periodo
+    private final Color ACTIVE_COLOR = new Color(255, 255, 255); // Verde suave (Seleccionado)
+    private final Color INACTIVE_COLOR = new Color(152, 150, 150); // Color gris por defecto del SO
+
     public Desktop(Stream<Currency> currencies) throws HeadlessException {
         this.commands = new HashMap<>();
+        this.periodButtons = new ArrayList<>();
         this.currencies = currencies.toArray(Currency[]::new);
         this.setTitle("Money Calculator");
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -47,31 +52,42 @@ public class Desktop extends JFrame{
         this.setLocationRelativeTo(null);
         this.setResizable(false);
         this.setLayout(new BorderLayout());
+        this.getContentPane().setBackground(Color.BLACK);
         this.getContentPane().add(panel(), NORTH);
         this.getContentPane().add(southpanel(), SOUTH);
         this.chartPanel = chartPanel();
         this.getContentPane().add(chartPanel, BorderLayout.CENTER);
     }
 
+
+    private void deactivateAllPeriodButtons() {
+        periodButtons.forEach(button -> button.setForeground(ACTIVE_COLOR));
+    }
+
     public ChartPanel chartPanel() {
-        return new ChartPanel(null);
+        ChartPanel panel = new ChartPanel(null);
+        panel.setBackground(null);
+        return panel;
     }
 
 
     private JPanel southpanel() {
         JPanel panel = new JPanel();
+        panel.setBackground(null);
         panel.setLayout(new FlowLayout());
-        panel.add(createButton("Week", "week"));
-        panel.add(createButton("Month", "month"));
-        panel.add(createButton("6 Month", "6month"));
-        panel.add(createButton("Year", "year"));
-        panel.add(createButton("5 Year", "5year"));
-        panel.add(createButton("Max", "max"));
+        periodButtons.add(createButton("Week", "week"));
+        periodButtons.add(createButton("Month", "month"));
+        periodButtons.add(createButton("6 Month", "6month"));
+        periodButtons.add(createButton("Year", "year"));
+        periodButtons.add(createButton("5 Year", "5year"));
+        periodButtons.add(createButton("Max", "max"));
+        periodButtons.forEach(panel::add);
         return panel;
     }
 
     private JPanel panel() {
         JPanel panel = new JPanel();
+        panel.setBackground(null);
         panel.setLayout(new FlowLayout(CENTER));
         panel.add(inputAmount = amountInput());
         panel.add(inputCurrency = currencySelector());
@@ -81,19 +97,16 @@ public class Desktop extends JFrame{
         return panel;
     }
 
-    private Component createButton(String buttonName, String commandName){
+    private JButton createButton(String buttonName, String commandName){
         JButton button = new JButton(buttonName);
+        button.setBackground(null);
+        button.setBorderPainted(false);
+        button.setFocusPainted(false);
+        button.setForeground(INACTIVE_COLOR);
         button.addActionListener(e -> {
             commands.get(commandName).execute();
-        });
-        return button;
-    }
-
-    //TODO eliminar esta linea
-    private Component weekAgoButton() {
-        JButton button = new JButton("week");
-        button.addActionListener(e -> {
-            commands.get("week").execute();
+            deactivateAllPeriodButtons(); //TODO que solo lo hagan los del south panel
+            button.setForeground(ACTIVE_COLOR);
         });
         return button;
     }
@@ -160,12 +173,15 @@ public class Desktop extends JFrame{
     }
 
     private JFreeChart decorate(JFreeChart lineChart, Chart chart) {
+        lineChart.setBackgroundPaint(null);
         decorate((XYPlot) lineChart.getPlot(), chart);
         return lineChart;
     }
 
     private void decorate(XYPlot plot, Chart chart) {
         plot.setBackgroundPaint(null);
+        plot.setDomainGridlinePaint(new Color(0, 0, 0, 0));
+        plot.setRangeGridlinePaint(new Color(0, 0, 0, 0));
         plot.addRangeMarker(getMarker(chart));
         paintLine(plot.getRenderer(), chart);
     }

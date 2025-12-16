@@ -33,7 +33,7 @@ public class GetHistorycComand implements Command {
         Currency currencyFrom = fromCurrencyDialog.get();
         Currency currencyTo = tocurrencyDialog.get();
         Stream<ExchangeRate> exchangeRate = exchangeRateLoader.load(currencyFrom, currencyTo, elapstime, LocalDate.now());
-        Chart chart = ChartBuilder.with(exchangeRate).title("Exchage Rate: " + currencyFrom.code()+ " -> " + currencyTo.code()).x("date").legend("cover").build();
+        Chart chart = ChartBuilder.with(exchangeRate).title("Exchange Rate: " + currencyFrom.code()+ " -> " + currencyTo.code()).x("date").legend("cover").build();
         chartDisplay.show(chart);
     }
 
