@@ -1,8 +1,11 @@
 package software.ulpgc.moneycalculator.application.Aguakate;
 
 
+import software.ulpgc.moneycalculator.architecture.control.AxisCommand;
+import software.ulpgc.moneycalculator.architecture.control.Command;
 import software.ulpgc.moneycalculator.architecture.control.ExchangeMoneyCommand;
 import software.ulpgc.moneycalculator.architecture.control.GetHistorycComand;
+import software.ulpgc.moneycalculator.architecture.ui.SettingDisplay;
 
 import java.time.LocalDate;
 
@@ -58,6 +61,10 @@ public class Main {
                 new ExchangeRateLoader(),
                 desktop.moneyDisplay()
         ));
+
+
+        desktop.addCommand("setting",
+        () -> new SettingPanel(desktop.setingApplier()).setVisible(true));
         desktop.setVisible(true);
 
     }
