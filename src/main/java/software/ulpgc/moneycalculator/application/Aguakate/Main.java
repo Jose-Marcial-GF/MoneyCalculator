@@ -58,6 +58,7 @@ public class Main {
                 desktop.chartDisplay(),
                 getLastYear(200)
         ));
+
         desktop.addCommand("exchange", new ExchangeMoneyCommand(
                 desktop.moneyDialog(),
                 desktop.currencyDialog(),
