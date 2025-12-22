@@ -1,17 +1,20 @@
 package software.ulpgc.moneycalculator.application.Aguakate;
 
 
-import software.ulpgc.moneycalculator.architecture.control.AxisCommand;
-import software.ulpgc.moneycalculator.architecture.control.Command;
 import software.ulpgc.moneycalculator.architecture.control.ExchangeMoneyCommand;
 import software.ulpgc.moneycalculator.architecture.control.GetHistorycComand;
-import software.ulpgc.moneycalculator.architecture.ui.SettingDisplay;
 
+import javax.swing.*;
+import com.formdev.flatlaf.*;
 import java.time.LocalDate;
 
 public class Main {
 
     public static void main(String[] args) {
+        FlatLaf.registerCustomDefaultsSource("com/formdev/flatlaf/extras");
+        UIManager.put("FlatLaf.useModernUI", true);
+        FlatDarkLaf.setup();
+
         Desktop desktop = new Desktop(new WebService().loadAll());
         desktop.addCommand("week", new GetHistorycComand(
                 desktop.inputCurrencyDialog(),
@@ -64,7 +67,7 @@ public class Main {
 
 
         desktop.addCommand("setting",
-        () -> new SettingPanel(desktop.setingApplier()).setVisible(true));
+        () -> new SettingPanel(desktop.settingsApplier(), desktop.settingsGetter(), desktop).setVisible(true));
         desktop.setVisible(true);
 
     }
