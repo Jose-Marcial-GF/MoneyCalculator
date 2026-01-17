@@ -1,33 +1,33 @@
 package software.ulpgc.moneycalculator.application.Aguakate;
 
-import software.ulpgc.moneycalculator.architecture.io.SettingsApplier;
-import software.ulpgc.moneycalculator.architecture.io.SettingsGetter;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import static java.awt.BorderLayout.CENTER;
 import static java.awt.BorderLayout.SOUTH;
 
 public class SettingPanel extends JDialog {
 
-    private final SettingsApplier settingsApplier;
+    private final Consumer<Integer[]> settingsConsumer;
     private final JToggleButton horizontalAxis;
     private final JToggleButton verticalAxis;
     private final Color ACTIVE_COLOR = new Color(255, 255, 255);
     private final Color INACTIVE_COLOR = new Color(108, 108, 108);
     private JButton applyButton;
 
-    public SettingPanel(SettingsApplier settingsApplier, SettingsGetter settingsGetter, Desktop desktop) {
-        super(desktop, "Setting Panel", true);
-        this.settingsApplier = settingsApplier;
+    public SettingPanel(Consumer<Integer[]> settingsConsumer, Supplier<Integer[]> settingsSupplier, Desktop desktop) {
+        super(desktop, "Setting Panel");
+        this.settingsConsumer = settingsConsumer;
         this.horizontalAxis = createToggleSwitch("Axis Horizontal");
         this.verticalAxis = createToggleSwitch("Axis Vertical");
         this.getContentPane().setBackground(Color.BLACK);
         this.getContentPane().add(axisPanel(), CENTER);
         this.getContentPane().add(ApplyPanel(), SOUTH);
         this.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        setSettings(settingsGetter.get());
+        setSettings(settingsSupplier.get());
         this.setResizable(false);
         this.setSize(500, 500);
     }
@@ -59,7 +59,7 @@ public class SettingPanel extends JDialog {
     }
 
     private void ApplyChanges() {
-        this.settingsApplier.apply(getNewSettings());
+        this.settingsConsumer.accept(getNewSettings());
     }
 
     private Integer[] getNewSettings() {

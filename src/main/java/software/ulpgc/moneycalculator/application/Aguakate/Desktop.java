@@ -10,8 +10,8 @@ import org.jfree.data.time.Day;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 import software.ulpgc.moneycalculator.architecture.control.Command;
-import software.ulpgc.moneycalculator.architecture.io.SettingsApplier;
-import software.ulpgc.moneycalculator.architecture.io.SettingsGetter;
+import software.ulpgc.moneycalculator.architecture.control.ExchangeMoneyCommand;
+import software.ulpgc.moneycalculator.architecture.control.GetHistorycComand;
 import software.ulpgc.moneycalculator.architecture.model.Chart;
 import software.ulpgc.moneycalculator.architecture.model.Currency;
 import software.ulpgc.moneycalculator.architecture.model.Money;
@@ -20,6 +20,7 @@ import software.ulpgc.moneycalculator.architecture.ui.*;
 
 import javax.swing.*;
 import java.awt.*;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Stream;
@@ -34,7 +35,7 @@ public class Desktop extends JFrame {
     private JComboBox<Currency> inputCurrency;
     private JTextField outputAmount;
     private JComboBox<Currency> outputCurrency;
-    private ChartPanel chartPanel;
+    private final ChartPanel chartPanel;
 
     private final List<JButton> periodButtons;
     private final Color ACTIVE_COLOR = new Color(255, 255, 255);
@@ -42,9 +43,8 @@ public class Desktop extends JFrame {
     private Integer[] axisStatus;
 
     public Desktop(Stream<Currency> currencies) throws HeadlessException {
-        this.commands = new HashMap<>();
         this.periodButtons = new ArrayList<>();
-        apply(new Integer[]{0, 0});
+        this.axisStatus = new Integer[]{0, 0};
         this.currencies = currencies.toArray(Currency[]::new);
         this.setTitle("Money Calculator");
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -57,6 +57,7 @@ public class Desktop extends JFrame {
         this.getContentPane().add(southPanel(), SOUTH);
         this.chartPanel = chartPanel();
         this.getContentPane().add(chartPanel, BorderLayout.CENTER);
+        this.commands = initializeCommands();
     }
 
     private void deactivateAllPeriodButtons(List<JButton> jButtonList) {
@@ -135,9 +136,7 @@ public class Desktop extends JFrame {
         button.setBorderPainted(false);
         button.setFocusPainted(false);
         button.setForeground(INACTIVE_COLOR);
-        button.addActionListener(e -> {
-            commands.get(commandName).execute();
-        });
+        button.addActionListener(e -> commands.get(commandName).execute());
         return button;
     }
 
@@ -155,9 +154,6 @@ public class Desktop extends JFrame {
         return new JComboBox<>(currencies);
     }
 
-    public void addCommand(String name, Command command) {
-        this.commands.put(name, command);
-    }
 
     public MoneyDialog moneyDialog() {
         return () -> new Money(inputAmount(), inputCurrency());
@@ -215,12 +211,6 @@ public class Desktop extends JFrame {
         paintLine(plot.getRenderer(), chart);
     }
 
-    private int drawAxis(JButton jButton) {
-        int i = jButton.isSelected() ? 255 : 0;
-        System.out.println("drawAxis = " + i);
-
-        return i;
-    }
 
     private static ValueMarker getMarker(Chart chart) {
         ValueMarker marker = new ValueMarker(chart.PointsList().getFirst().rate());
@@ -250,9 +240,7 @@ public class Desktop extends JFrame {
 
     private static TimeSeriesCollection dataOf(Chart chart) {
         TimeSeries timeSeries = new TimeSeries("");
-        chart.Points().forEach(point -> {
-            timeSeries.add(getDay(point), point.rate());
-        });
+        chart.Points().forEach(point -> timeSeries.add(getDay(point), point.rate()));
         return new TimeSeriesCollection(timeSeries);
     }
 
@@ -268,15 +256,94 @@ public class Desktop extends JFrame {
         return axisStatus;
     }
 
-    public SettingsApplier settingsApplier() {
-        return this::apply;
-    }
 
     private void apply(Integer[] state) {
         this.axisStatus = state;
+        if (chartPanel.getChart() != null) repaintChart();
     }
 
-    public SettingsGetter settingsGetter() {
-        return this::axisStatus;
+    private void repaintChart() {
+        XYPlot plot = (XYPlot) chartPanel.getChart().getPlot();
+        plot.setRangeGridlinePaint(new Color(255, 255, 255, axisStatus[0] * 255));
+        plot.setDomainGridlinePaint(new Color(255, 255, 255, axisStatus[1] * 255));
     }
+
+
+    private Map<String, Command> initializeCommands() {
+        return initializeCommands(new HashMap<>());
+
+    }
+
+    private Map<String, Command> initializeCommands(HashMap<String, Command> desktop) {
+         desktop.put("week", new GetHistorycComand(
+                this.inputCurrencyDialog(),
+                this.currencyDialog(),
+                new ExchangeRateLoader(),
+                this.chartDisplay(),
+                getLastWeek()
+        ));
+        desktop.put("month", new GetHistorycComand(
+                this.inputCurrencyDialog(),
+                this.currencyDialog(),
+                new ExchangeRateLoader(),
+                this.chartDisplay(),
+                getLastMoth(1)
+        ));
+        desktop.put("6month", new GetHistorycComand(
+                this.inputCurrencyDialog(),
+                this.currencyDialog(),
+                new ExchangeRateLoader(),
+                this.chartDisplay(),
+                getLastMoth(6)
+        ));
+        desktop.put("year", new GetHistorycComand(
+                this.inputCurrencyDialog(),
+                this.currencyDialog(),
+                new ExchangeRateLoader(),
+                this.chartDisplay(),
+                getLastYear(1)
+        ));
+        desktop.put("5year", new GetHistorycComand(
+                this.inputCurrencyDialog(),
+                this.currencyDialog(),
+                new ExchangeRateLoader(),
+                this.chartDisplay(),
+                getLastYear(5)
+        ));
+        desktop.put("max", new GetHistorycComand(
+                this.inputCurrencyDialog(),
+                this.currencyDialog(),
+                new ExchangeRateLoader(),
+                this.chartDisplay(),
+                getLastYear(200)
+        ));
+
+        desktop.put("exchange", new ExchangeMoneyCommand(
+                this.moneyDialog(),
+                this.currencyDialog(),
+                new ExchangeRateLoader(),
+                this.moneyDisplay()
+        ));
+
+
+        desktop.put("setting",
+                () -> new SettingPanel(this::apply, this::axisStatus, this).setVisible(true));
+        return desktop;
+    }
+
+        private static LocalDate getLastYear(int yearsAgo) {
+            return LocalDate.now().minusYears(yearsAgo);
+        }
+
+        private static LocalDate getLastMoth(int mothsAgo) {
+            return LocalDate.now().minusMonths(mothsAgo);
+        }
+
+
+        private static LocalDate getLastWeek() {
+            return LocalDate.now().minusWeeks(1);
+        }
+
+
+
 }
