@@ -6,7 +6,7 @@
 
 A robust Desktop Application built with **Java Swing** for real-time currency exchange and historical exchange rate visualization.
 
-This project implements the **Command Pattern** and adheres to **SOLID principles** by using the architecture **`model-view-controller`**
+This project implements the **Command Pattern** and adheres to **SOLID principles** by using the architecture **Model-View-Controller`**
 
 
 ## 🚀 Features
